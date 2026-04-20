@@ -7,12 +7,11 @@
 <style>
 body {
     font-family: -apple-system, BlinkMacSystemFont, sans-serif;
-    padding: 0;
     margin: 0;
     background: #f5f5f5;
 }
 
-/* ===== ヘッダ（固定） ===== */
+/* ===== ヘッダ固定 ===== */
 .header {
     position: sticky;
     top: 0;
@@ -22,10 +21,11 @@ body {
     border-bottom: 1px solid #ddd;
 }
 
-/* ソートボタン */
+/* ソート */
 .sort-bar {
     display: flex;
-    gap: 10px;
+    gap: 12px;
+    margin-bottom: 8px;
 }
 
 .sort-btn {
@@ -37,6 +37,26 @@ body {
 .sort-btn.active {
     font-weight: bold;
     color: black;
+}
+
+/* フィルタ */
+.filter-bar {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.filter-btn {
+    padding: 4px 10px;
+    font-size: 12px;
+    border-radius: 12px;
+    background: #eee;
+    cursor: pointer;
+}
+
+.filter-btn.active {
+    background: #222;
+    color: white;
 }
 
 /* ===== リスト ===== */
@@ -71,12 +91,18 @@ body {
 
 <body>
 
-<!-- ===== 固定ヘッダ ===== -->
 <div class="header">
+
+    <!-- ソート -->
     <div class="sort-bar">
         <div id="btn-name" class="sort-btn active">Name</div>
         <div id="btn-date" class="sort-btn">Date</div>
+        <div id="btn-category" class="sort-btn">Category</div>
     </div>
+
+    <!-- フィルタ -->
+    <div id="filterBar" class="filter-bar"></div>
+
 </div>
 
 <div id="list"></div>
@@ -84,18 +110,50 @@ body {
 <script>
 let DATA = [];
 let currentSort = "name";
+let currentFilter = "ALL";
 
+// ===== データ取得 =====
 fetch('data.json')
 .then(r => r.json())
 .then(data => {
 
-    // ===== ヘッダ行除去 =====
-    DATA = data.filter(x => 
-        x.Name && x.Name !== "Name"
-    );
+    // ヘッダ除去
+    DATA = data.filter(x => x.Name && x.Name !== "Name");
 
+    createFilterButtons();
     render();
 });
+
+// ===== Category抽出 → ボタン生成 =====
+function createFilterButtons() {
+
+    const bar = document.getElementById("filterBar");
+
+    const categories = [...new Set(DATA.map(x => x.Category))].sort();
+
+    // ALLボタン
+    const allBtn = createFilterBtn("ALL");
+    bar.appendChild(allBtn);
+
+    categories.forEach(cat => {
+        const btn = createFilterBtn(cat);
+        bar.appendChild(btn);
+    });
+}
+
+function createFilterBtn(cat) {
+    const btn = document.createElement("div");
+    btn.className = "filter-btn" + (cat === "ALL" ? " active" : "");
+    btn.textContent = cat;
+
+    btn.onclick = () => {
+        currentFilter = cat;
+        render();
+        updateFilterActive();
+    };
+
+    return btn;
+}
 
 // ===== 描画 =====
 function render() {
@@ -103,15 +161,23 @@ function render() {
     const list = document.getElementById('list');
     list.innerHTML = "";
 
-    let sorted = [...DATA];
+    let filtered = [...DATA];
 
-    if (currentSort === "name") {
-        sorted.sort((a, b) => a.Name.localeCompare(b.Name));
-    } else {
-        sorted.sort((a, b) => b.CreatedAt.localeCompare(a.CreatedAt));
+    // フィルタ
+    if (currentFilter !== "ALL") {
+        filtered = filtered.filter(x => x.Category === currentFilter);
     }
 
-    sorted.forEach(x => {
+    // ソート
+    if (currentSort === "name") {
+        filtered.sort((a, b) => a.Name.localeCompare(b.Name));
+    } else if (currentSort === "date") {
+        filtered.sort((a, b) => b.CreatedAt.localeCompare(a.CreatedAt));
+    } else if (currentSort === "category") {
+        filtered.sort((a, b) => a.Category.localeCompare(b.Category));
+    }
+
+    filtered.forEach(x => {
 
         const card = document.createElement('div');
         card.className = 'card';
@@ -128,10 +194,10 @@ function render() {
         list.appendChild(card);
     });
 
-    updateActive();
+    updateSortActive();
 }
 
-// ===== ボタン処理 =====
+// ===== ソートボタン =====
 document.getElementById("btn-name").onclick = () => {
     currentSort = "name";
     render();
@@ -142,9 +208,22 @@ document.getElementById("btn-date").onclick = () => {
     render();
 };
 
-function updateActive() {
+document.getElementById("btn-category").onclick = () => {
+    currentSort = "category";
+    render();
+};
+
+// ===== UI状態更新 =====
+function updateSortActive() {
     document.getElementById("btn-name").classList.toggle("active", currentSort === "name");
     document.getElementById("btn-date").classList.toggle("active", currentSort === "date");
+    document.getElementById("btn-category").classList.toggle("active", currentSort === "category");
+}
+
+function updateFilterActive() {
+    document.querySelectorAll(".filter-btn").forEach(btn => {
+        btn.classList.toggle("active", btn.textContent === currentFilter);
+    });
 }
 </script>
 
