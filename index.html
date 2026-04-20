@@ -6,73 +6,80 @@
 
 <style>
 body {
-    font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+    font-family: sans-serif;
     margin: 0;
     background: #f5f5f5;
 }
 
-/* ===== ヘッダ固定 ===== */
+/* 固定ヘッダ */
 .header {
     position: sticky;
     top: 0;
-    background: white;
+    background: #f5f5f5;
     padding: 10px;
-    z-index: 100;
-    border-bottom: 1px solid #ddd;
+    z-index: 10;
 }
 
-/* ソート */
+/* ソートボタン */
 .sort-bar {
     display: flex;
-    gap: 12px;
+    gap: 6px;
     margin-bottom: 8px;
 }
 
 .sort-btn {
-    font-size: 14px;
+    flex: 1;
+    padding: 8px;
+    background: white;
+    border-radius: 10px;
+    text-align: center;
+    font-size: 13px;
     cursor: pointer;
-    color: #555;
 }
 
 .sort-btn.active {
-    font-weight: bold;
-    color: black;
-}
-
-/* フィルタ */
-.filter-bar {
-    display: flex;
-    gap: 8px;
-    flex-wrap: wrap;
-    margin-bottom: 8px;
-}
-
-.filter-btn {
-    padding: 4px 10px;
-    font-size: 12px;
-    border-radius: 12px;
-    background: #eee;
-    cursor: pointer;
-}
-
-.filter-btn.active {
     background: #222;
     color: white;
 }
 
-/* 検索 */
-.search-box {
-    width: calc(100% - 20px);
-    margin: 0 10px auto;
-    display: block;
-
-    padding: 8px;
-    font-size: 14px;
-    border-radius: 8px;
-    border: 1px solid #ccc;
+/* カテゴリフィルタ */
+.filter-bar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 8px;
 }
 
-/* ===== リスト ===== */
+.filter-btn {
+    padding: 6px 10px;
+    background: white;
+    border-radius: 10px;
+    font-size: 12px;
+    cursor: pointer;
+}
+
+.filter-btn.active {
+    background: #444;
+    color: white;
+}
+
+/* 共通コンテナ */
+.container {
+    padding: 10px;
+}
+
+/* 検索ボックス */
+.search-box {
+    width: 100%;
+    display: block;
+    padding: 10px 14px;
+    border-radius: 12px;
+    border: 1px solid #ccc;
+    font-size: 14px;
+    box-sizing: border-box;
+}
+
+/* リスト */
 #list {
     padding: 10px;
 }
@@ -81,22 +88,23 @@ body {
 .card {
     background: white;
     margin-bottom: 10px;
-    padding: 14px;
+    padding: 12px;
     border-radius: 12px;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-    cursor: pointer;
+    display: block;
+    text-decoration: none;
+    color: inherit;
 }
 
-/* タイトル（2行制限） */
-.title {
-    font-size: 16px;
+/* 名前（2行制限） */
+.name {
     font-weight: bold;
+    font-size: 15px;
 
     display: -webkit-box;
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
-    overflow: hidden;
 
+    overflow: hidden;
     word-break: break-word;
 }
 
@@ -104,159 +112,150 @@ body {
 .date {
     font-size: 12px;
     color: gray;
-    margin-top: 6px;
+    margin-top: 4px;
 }
 </style>
 </head>
 
 <body>
 
+<!-- ヘッダ -->
 <div class="header">
 
     <!-- ソート -->
     <div class="sort-bar">
-        <div id="btn-name" class="sort-btn active">Name</div>
-        <div id="btn-date" class="sort-btn">Date</div>
-        <div id="btn-category" class="sort-btn">Category</div>
+        <div id="sort-name" class="sort-btn active" onclick="setSort('name')">Name</div>
+        <div id="sort-date" class="sort-btn" onclick="setSort('date')">Date</div>
+        <div id="sort-category" class="sort-btn" onclick="setSort('category')">Category</div>
     </div>
 
-    <!-- フィルタ -->
+    <!-- カテゴリフィルタ -->
     <div id="filterBar" class="filter-bar"></div>
-
-    <!-- 検索 -->
-    <input id="searchBox" class="search-box" placeholder="検索（名前・会社など）">
 
 </div>
 
+<!-- 検索（位置ズレ修正済み） -->
+<div class="container">
+    <input id="searchBox" class="search-box" placeholder="検索（名前・会社など）">
+</div>
+
+<!-- リスト -->
 <div id="list"></div>
 
 <script>
-let DATA = [];
-let currentSort = "name";
-let currentFilter = "ALL";
-let searchText = "";
+let originalData = [];
+let currentSort = 'name';
+let currentFilter = 'ALL';
+let searchText = '';
 
-// ===== データ取得 =====
+/* 初期読み込み */
 fetch('data.json')
 .then(r => r.json())
 .then(data => {
 
-    DATA = data.filter(x => x.Name && x.Name !== "Name");
+    // ヘッダ行除去（重要）
+    originalData = data.filter(x =>
+        x.Name && x.Name !== 'Name'
+    );
 
-    createFilterButtons();
+    buildFilterButtons(originalData);
     render();
 });
 
-// ===== フィルタ生成 =====
-function createFilterButtons() {
+/* カテゴリボタン生成 */
+function buildFilterButtons(data) {
+    const bar = document.getElementById('filterBar');
 
-    const bar = document.getElementById("filterBar");
+    const categories = [...new Set(data.map(x => x.Category))];
 
-    const categories = [...new Set(DATA.map(x => x.Category))].sort();
+    const allBtn = createFilterButton('ALL');
+    bar.appendChild(allBtn);
 
-    bar.appendChild(createFilterBtn("ALL"));
-
-    categories.forEach(cat => {
-        bar.appendChild(createFilterBtn(cat));
+    categories.forEach(c => {
+        const btn = createFilterButton(c);
+        bar.appendChild(btn);
     });
+
+    setActiveFilter('ALL');
 }
 
-function createFilterBtn(cat) {
-    const btn = document.createElement("div");
-    btn.className = "filter-btn" + (cat === "ALL" ? " active" : "");
-    btn.textContent = cat;
+function createFilterButton(name) {
+    const btn = document.createElement('div');
+    btn.className = 'filter-btn';
+    btn.textContent = name;
 
     btn.onclick = () => {
-        currentFilter = cat;
+        currentFilter = name;
+        setActiveFilter(name);
         render();
-        updateFilterActive();
     };
 
     return btn;
 }
 
-// ===== 検索 =====
-document.getElementById("searchBox").addEventListener("input", e => {
+function setActiveFilter(name) {
+    document.querySelectorAll('.filter-btn').forEach(b => {
+        b.classList.remove('active');
+        if (b.textContent === name) b.classList.add('active');
+    });
+}
+
+/* ソート */
+function setSort(type) {
+    currentSort = type;
+
+    document.querySelectorAll('.sort-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById('sort-' + type).classList.add('active');
+
+    render();
+}
+
+/* 検索 */
+document.getElementById('searchBox').addEventListener('input', e => {
     searchText = e.target.value.toLowerCase();
     render();
 });
 
-// ===== 描画 =====
+/* 描画 */
 function render() {
+    let data = [...originalData];
 
-    const list = document.getElementById('list');
-    list.innerHTML = "";
-
-    let filtered = [...DATA];
-
-    // Categoryフィルタ
-    if (currentFilter !== "ALL") {
-        filtered = filtered.filter(x => x.Category === currentFilter);
+    // フィルタ
+    if (currentFilter !== 'ALL') {
+        data = data.filter(x => x.Category === currentFilter);
     }
 
     // 検索
     if (searchText) {
-        filtered = filtered.filter(x =>
+        data = data.filter(x =>
             (x.Name && x.Name.toLowerCase().includes(searchText)) ||
             (x.Category && x.Category.toLowerCase().includes(searchText))
         );
     }
 
     // ソート
-    if (currentSort === "name") {
-        filtered.sort((a, b) => a.Name.localeCompare(b.Name));
-    } else if (currentSort === "date") {
-        filtered.sort((a, b) => b.CreatedAt.localeCompare(a.CreatedAt));
-    } else if (currentSort === "category") {
-        filtered.sort((a, b) => a.Category.localeCompare(b.Category));
-    }
+    data.sort((a, b) => {
+        if (currentSort === 'name') return a.Name.localeCompare(b.Name);
+        if (currentSort === 'category') return a.Category.localeCompare(b.Category);
+        return b.CreatedAt.localeCompare(a.CreatedAt);
+    });
 
-    filtered.forEach(x => {
+    // 描画
+    const list = document.getElementById('list');
+    list.innerHTML = '';
 
-        const card = document.createElement('div');
-        card.className = 'card';
+    data.forEach(x => {
+        const a = document.createElement('a');
+        a.className = 'card';
+        a.href = x.Url;
+        a.target = '_blank';
 
-        card.onclick = () => {
-            window.open(x.Url, '_blank');
-        };
-
-        card.innerHTML = `
-            <div class="title">${x.Category}：${x.Name}</div>
+        a.innerHTML = `
+            <div class="name">${x.Category}：${x.Name}</div>
             <div class="date">${x.CreatedAt}</div>
         `;
 
-        list.appendChild(card);
-    });
-
-    updateSortActive();
-}
-
-// ===== ソートボタン =====
-document.getElementById("btn-name").onclick = () => {
-    currentSort = "name";
-    render();
-};
-
-document.getElementById("btn-date").onclick = () => {
-    currentSort = "date";
-    render();
-};
-
-document.getElementById("btn-category").onclick = () => {
-    currentSort = "category";
-    render();
-};
-
-// ===== UI更新 =====
-function updateSortActive() {
-    document.getElementById("btn-name").classList.toggle("active", currentSort === "name");
-    document.getElementById("btn-date").classList.toggle("active", currentSort === "date");
-    document.getElementById("btn-category").classList.toggle("active", currentSort === "category");
-}
-
-function updateFilterActive() {
-    document.querySelectorAll(".filter-btn").forEach(btn => {
-        btn.classList.toggle("active", btn.textContent === currentFilter);
+        list.appendChild(a);
     });
 }
 </script>
