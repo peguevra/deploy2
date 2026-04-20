@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+body { font-family:sans-serif; padding:10px; background:#f5f5f5; }
+.card { background:white; margin:10px 0; padding:12px; border-radius:10px; }
+</style>
+</head>
+<body>
+
+<h3>名刺一覧</h3>
+
+<div id="list"></div>
+
+<script>
+fetch('data.json')
+.then(function(r){ return r.json(); })
+.then(function(data){
+    var list = document.getElementById('list');
+
+    data.forEach(function(x){
+        var div = document.createElement('div');
+        div.className = 'card';
+
+        var name = document.createElement('div');
+        name.textContent = x.Name;
+
+        var date = document.createElement('div');
+        date.textContent = x.CreatedAt;
+
+        var link = document.createElement('a');
+        link.href = x.Url;
+        link.target = "_blank";
+        link.textContent = "開く";
+
+        div.appendChild(name);
+        div.appendChild(date);
+        div.appendChild(link);
+
+        list.appendChild(div);
+    });
+});
+</script>
+
+</body>
+</html>
