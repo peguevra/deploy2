@@ -7,30 +7,57 @@
 <style>
 body {
     font-family: -apple-system, BlinkMacSystemFont, sans-serif;
-    padding: 10px;
-    background: #f5f5f5;
+    padding: 0;
     margin: 0;
+    background: #f5f5f5;
 }
 
-h3 {
-    margin: 5px 0 15px 5px;
+/* ===== ヘッダ（固定） ===== */
+.header {
+    position: sticky;
+    top: 0;
+    background: white;
+    padding: 10px;
+    z-index: 100;
+    border-bottom: 1px solid #ddd;
+}
+
+/* ソートボタン */
+.sort-bar {
+    display: flex;
+    gap: 10px;
+}
+
+.sort-btn {
+    font-size: 14px;
+    cursor: pointer;
+    color: #555;
+}
+
+.sort-btn.active {
+    font-weight: bold;
+    color: black;
+}
+
+/* ===== リスト ===== */
+#list {
+    padding: 10px;
 }
 
 /* カード */
 .card {
     background: white;
-    margin: 10px 0;
+    margin-bottom: 10px;
     padding: 14px;
     border-radius: 12px;
     box-shadow: 0 2px 6px rgba(0,0,0,0.1);
     cursor: pointer;
 }
 
-/* タイトル（Category + Name） */
+/* タイトル */
 .title {
     font-size: 16px;
     font-weight: bold;
-    letter-spacing: 0.5px;
 }
 
 /* 日付 */
@@ -44,26 +71,51 @@ h3 {
 
 <body>
 
-<h3>名刺一覧</h3>
+<!-- ===== 固定ヘッダ ===== -->
+<div class="header">
+    <div class="sort-bar">
+        <div id="btn-name" class="sort-btn active">Name</div>
+        <div id="btn-date" class="sort-btn">Date</div>
+    </div>
+</div>
 
 <div id="list"></div>
 
 <script>
+let DATA = [];
+let currentSort = "name";
+
 fetch('data.json')
 .then(r => r.json())
 .then(data => {
 
+    // ===== ヘッダ行除去 =====
+    DATA = data.filter(x => 
+        x.Name && x.Name !== "Name"
+    );
+
+    render();
+});
+
+// ===== 描画 =====
+function render() {
+
     const list = document.getElementById('list');
+    list.innerHTML = "";
 
-    // 新しい順に並べる（おすすめ）
-    data.sort((a, b) => b.CreatedAt.localeCompare(a.CreatedAt));
+    let sorted = [...DATA];
 
-    data.forEach(x => {
+    if (currentSort === "name") {
+        sorted.sort((a, b) => a.Name.localeCompare(b.Name));
+    } else {
+        sorted.sort((a, b) => b.CreatedAt.localeCompare(a.CreatedAt));
+    }
+
+    sorted.forEach(x => {
 
         const card = document.createElement('div');
         card.className = 'card';
 
-        // ★カードクリックで開く
         card.onclick = () => {
             window.open(x.Url, '_blank');
         };
@@ -76,7 +128,24 @@ fetch('data.json')
         list.appendChild(card);
     });
 
-});
+    updateActive();
+}
+
+// ===== ボタン処理 =====
+document.getElementById("btn-name").onclick = () => {
+    currentSort = "name";
+    render();
+};
+
+document.getElementById("btn-date").onclick = () => {
+    currentSort = "date";
+    render();
+};
+
+function updateActive() {
+    document.getElementById("btn-name").classList.toggle("active", currentSort === "name");
+    document.getElementById("btn-date").classList.toggle("active", currentSort === "date");
+}
 </script>
 
 </body>
