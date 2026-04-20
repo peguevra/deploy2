@@ -44,6 +44,7 @@ body {
     display: flex;
     gap: 8px;
     flex-wrap: wrap;
+    margin-bottom: 8px;
 }
 
 .filter-btn {
@@ -57,6 +58,15 @@ body {
 .filter-btn.active {
     background: #222;
     color: white;
+}
+
+/* 検索 */
+.search-box {
+    width: 100%;
+    padding: 8px;
+    font-size: 14px;
+    border-radius: 8px;
+    border: 1px solid #ccc;
 }
 
 /* ===== リスト ===== */
@@ -74,10 +84,17 @@ body {
     cursor: pointer;
 }
 
-/* タイトル */
+/* タイトル（2行制限） */
 .title {
     font-size: 16px;
     font-weight: bold;
+
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+
+    word-break: break-word;
 }
 
 /* 日付 */
@@ -103,6 +120,9 @@ body {
     <!-- フィルタ -->
     <div id="filterBar" class="filter-bar"></div>
 
+    <!-- 検索 -->
+    <input id="searchBox" class="search-box" placeholder="検索（名前・会社など）">
+
 </div>
 
 <div id="list"></div>
@@ -111,33 +131,30 @@ body {
 let DATA = [];
 let currentSort = "name";
 let currentFilter = "ALL";
+let searchText = "";
 
 // ===== データ取得 =====
 fetch('data.json')
 .then(r => r.json())
 .then(data => {
 
-    // ヘッダ除去
     DATA = data.filter(x => x.Name && x.Name !== "Name");
 
     createFilterButtons();
     render();
 });
 
-// ===== Category抽出 → ボタン生成 =====
+// ===== フィルタ生成 =====
 function createFilterButtons() {
 
     const bar = document.getElementById("filterBar");
 
     const categories = [...new Set(DATA.map(x => x.Category))].sort();
 
-    // ALLボタン
-    const allBtn = createFilterBtn("ALL");
-    bar.appendChild(allBtn);
+    bar.appendChild(createFilterBtn("ALL"));
 
     categories.forEach(cat => {
-        const btn = createFilterBtn(cat);
-        bar.appendChild(btn);
+        bar.appendChild(createFilterBtn(cat));
     });
 }
 
@@ -155,6 +172,12 @@ function createFilterBtn(cat) {
     return btn;
 }
 
+// ===== 検索 =====
+document.getElementById("searchBox").addEventListener("input", e => {
+    searchText = e.target.value.toLowerCase();
+    render();
+});
+
 // ===== 描画 =====
 function render() {
 
@@ -163,9 +186,17 @@ function render() {
 
     let filtered = [...DATA];
 
-    // フィルタ
+    // Categoryフィルタ
     if (currentFilter !== "ALL") {
         filtered = filtered.filter(x => x.Category === currentFilter);
+    }
+
+    // 検索
+    if (searchText) {
+        filtered = filtered.filter(x =>
+            (x.Name && x.Name.toLowerCase().includes(searchText)) ||
+            (x.Category && x.Category.toLowerCase().includes(searchText))
+        );
     }
 
     // ソート
@@ -213,7 +244,7 @@ document.getElementById("btn-category").onclick = () => {
     render();
 };
 
-// ===== UI状態更新 =====
+// ===== UI更新 =====
 function updateSortActive() {
     document.getElementById("btn-name").classList.toggle("active", currentSort === "name");
     document.getElementById("btn-date").classList.toggle("active", currentSort === "date");
