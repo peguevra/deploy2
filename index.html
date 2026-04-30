@@ -11,8 +11,6 @@ body {
     background: #f5f5f5;
 }
 
-/* 固定ヘッダ */
-/* 固定ヘッダ */
 .header {
     position: sticky;
     top: 0;
@@ -21,7 +19,6 @@ body {
     z-index: 10;
 }
 
-/* ソートボタン */
 .sort-bar {
     display: flex;
     gap: 6px;
@@ -43,7 +40,6 @@ body {
     color: white;
 }
 
-/* カテゴリフィルタ */
 .filter-bar {
     display: flex;
     flex-wrap: wrap;
@@ -64,12 +60,10 @@ body {
     color: white;
 }
 
-/* 共通コンテナ */
 .container {
     padding: 10px;
 }
 
-/* 検索ボックス */
 .search-box {
     width: 100%;
     display: block;
@@ -80,12 +74,10 @@ body {
     box-sizing: border-box;
 }
 
-/* リスト */
 #list {
     padding: 10px;
 }
 
-/* カード */
 .card {
     background: white;
     margin-bottom: 10px;
@@ -96,7 +88,6 @@ body {
     color: inherit;
 }
 
-/* 名前（2行制限） */
 .name {
     font-weight: bold;
     font-size: 15px;
@@ -109,7 +100,6 @@ body {
     word-break: break-word;
 }
 
-/* 日付 */
 .date {
     font-size: 12px;
     color: gray;
@@ -120,27 +110,20 @@ body {
 
 <body>
 
-<!-- ヘッダ -->
 <div class="header">
-
-    <!-- ソート -->
     <div class="sort-bar">
         <div id="sort-name" class="sort-btn active" onclick="setSort('name')">Name</div>
         <div id="sort-date" class="sort-btn" onclick="setSort('date')">Date</div>
         <div id="sort-category" class="sort-btn" onclick="setSort('category')">Category</div>
     </div>
 
-    <!-- カテゴリフィルタ -->
     <div id="filterBar" class="filter-bar"></div>
-
 </div>
 
-<!-- 検索（位置ズレ修正済み） -->
 <div class="container">
-    <input id="searchBox" class="search-box" placeholder="検索（名前・会社など）">
+    <input id="searchBox" class="search-box" placeholder="検索（名前・カテゴリ）">
 </div>
 
-<!-- リスト -->
 <div id="list"></div>
 
 <script>
@@ -149,15 +132,23 @@ let currentSort = 'name';
 let currentFilter = 'ALL';
 let searchText = '';
 
-/* 初期読み込み */
-fetch('data.json')
+/* 初期読み込み（Supabase） */
+fetch('https://YOUR_PROJECT_ID.supabase.co/rest/v1/cards?select=*', {
+    headers: {
+        apikey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlsbnlrZ2xzY2tjZmdhbHZlZmN5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc0OTM3MDEsImV4cCI6MjA5MzA2OTcwMX0.vWZoPtiLDbNPWllM0eWGh0gZTBw8TFsHTVn26z_TDiM',
+        Authorization: 'https://ylnykglsckcfgalvefcy.supabase.co'
+    }
+})
 .then(r => r.json())
 .then(data => {
 
-    // ヘッダ行除去（重要）
-    originalData = data.filter(x =>
-        x.Name && x.Name !== 'Name'
-    );
+    // ★既存JS互換に変換
+    originalData = data.map(x => ({
+        Name: x.name,
+        Category: x.category,
+        Url: x.url,
+        CreatedAt: x.date
+    }));
 
     buildFilterButtons(originalData);
     render();
@@ -221,12 +212,10 @@ document.getElementById('searchBox').addEventListener('input', e => {
 function render() {
     let data = [...originalData];
 
-    // フィルタ
     if (currentFilter !== 'ALL') {
         data = data.filter(x => x.Category === currentFilter);
     }
 
-    // 検索
     if (searchText) {
         data = data.filter(x =>
             (x.Name && x.Name.toLowerCase().includes(searchText)) ||
@@ -234,14 +223,12 @@ function render() {
         );
     }
 
-    // ソート
     data.sort((a, b) => {
         if (currentSort === 'name') return a.Name.localeCompare(b.Name);
         if (currentSort === 'category') return a.Category.localeCompare(b.Category);
-        return b.CreatedAt.localeCompare(a.CreatedAt);
+        return (b.CreatedAt || '').localeCompare(a.CreatedAt || '');
     });
 
-    // 描画
     const list = document.getElementById('list');
     list.innerHTML = '';
 
