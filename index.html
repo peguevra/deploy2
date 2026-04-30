@@ -133,10 +133,10 @@ let currentFilter = 'ALL';
 let searchText = '';
 
 /* 初期読み込み（Supabase） */
-fetch('https://YOUR_PROJECT_ID.supabase.co/rest/v1/cards?select=*', {
+fetch('https://ylnykglsckcfgalvefcy.supabase.co', {
     headers: {
         apikey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlsbnlrZ2xzY2tjZmdhbHZlZmN5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc0OTM3MDEsImV4cCI6MjA5MzA2OTcwMX0.vWZoPtiLDbNPWllM0eWGh0gZTBw8TFsHTVn26z_TDiM',
-        Authorization: 'https://ylnykglsckcfgalvefcy.supabase.co'
+        Authorization: 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlsbnlrZ2xzY2tjZmdhbHZlZmN5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc0OTM3MDEsImV4cCI6MjA5MzA2OTcwMX0.vWZoPtiLDbNPWllM0eWGh0gZTBw8TFsHTVn26z_TDiM'
     }
 })
 .then(r => r.json())
