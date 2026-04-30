@@ -133,10 +133,10 @@ let currentFilter = 'ALL';
 let searchText = '';
 
 /* 初期読み込み（Supabase） */
-fetch('https://ylnykglsckcfgalvefcy.supabase.co', {
+fetch('https://ylnykglsckcfgalvefcy.supabase.co/rest/v1/cards?select=*'', {
     headers: {
-        apikey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlsbnlrZ2xzY2tjZmdhbHZlZmN5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc0OTM3MDEsImV4cCI6MjA5MzA2OTcwMX0.vWZoPtiLDbNPWllM0eWGh0gZTBw8TFsHTVn26z_TDiM',
-        Authorization: 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlsbnlrZ2xzY2tjZmdhbHZlZmN5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc0OTM3MDEsImV4cCI6MjA5MzA2OTcwMX0.vWZoPtiLDbNPWllM0eWGh0gZTBw8TFsHTVn26z_TDiM'
+        apikey: 'sb_publishable_eYNsMIHImr5MhyOpeBW-eg_D42B08FA',
+        Authorization: 'Bearer sb_publishable_eYNsMIHImr5MhyOpeBW-eg_D42B08FA'
     }
 })
 .then(r => r.json())
