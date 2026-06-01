@@ -1,0 +1,17 @@
+name: Supabase KeepAlive Cards
+
+on:
+  schedule:
+    - cron: '15 */12 * * *'
+  workflow_dispatch:
+
+jobs:
+  keepalive:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Query cards table
+        run: |
+          curl -H "apikey: ${{ secrets.SUPABASE_CARDS_ANON_KEY }}" \
+               -H "Authorization: Bearer ${{ secrets.SUPABASE_CARDS_ANON_KEY }}" \
+               "https://ylnykglsckcfgalvefcy.supabase.co/rest/v1/cards?select=id&limit=1"
